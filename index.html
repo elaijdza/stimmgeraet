@@ -20,7 +20,8 @@ h1{font-size:1rem;font-weight:600;margin:0;color:var(--mute)}
 .note small{font-size:.28em;color:var(--mute);margin-left:.08em}
 .read{display:flex;justify-content:space-between;color:var(--mute);font-size:1rem;font-variant-numeric:tabular-nums}
 .read b{color:var(--ink);font-weight:600}
-.gauge{width:calc(100% + 2rem);margin:0 -1rem;height:auto;display:block}
+.gw{width:calc(100% + 2rem);margin:0 -1rem;flex:none}
+.gauge{width:100%;height:auto;display:block}
 .arc{fill:none;stroke:var(--line);stroke-width:2}
 .zone{fill:none;stroke:color-mix(in srgb,var(--ok) 45%,transparent);stroke-width:16}
 .tick{stroke:var(--mute);stroke-width:2.5}
@@ -50,7 +51,7 @@ button:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
   <h1>Stimmgerät</h1>
   <p class="note" id="note" aria-live="polite">–</p>
   <div class="read"><span><b id="cents">–</b> Cent</span><span><b id="hz">–</b> Hz</span></div>
-  <svg class="gauge" viewBox="0 12 300 172" role="img" aria-label="Zeigerinstrument für die Abweichung in Cent">
+  <div class="gw"><svg class="gauge" viewBox="0 12 300 172" role="img" aria-label="Zeigerinstrument für die Abweichung in Cent">
     <path class="arc" d="M 16.07 148.38 A 136 136 0 0 1 283.93 148.38"/>
     <path class="zone" d="M 131.07 37.32 A 136 136 0 0 1 168.93 37.32"/>
     <line class="tick" x1="150" y1="52" x2="150" y2="32"/>
@@ -62,7 +63,7 @@ button:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
     <text class="lab" x="284" y="168">+50</text>
     <text class="lab" x="16" y="168">−50</text>
     <g class="needle" id="needle"><line x1="150" y1="172" x2="150" y2="55"/><circle cx="150" cy="172" r="10"/></g>
-  </svg>
+  </svg></div>
   <div class="ref"><label for="inst">Instrument</label><select id="inst"></select></div>
   <div class="ref"><label for="tr">Anzeige</label><select id="tr"><option value="0">Klingend (Konzertton)</option><option value="2">B-Instrument (Trompete, Klarinette)</option><option value="9">Es-Instrument (Altsaxophon)</option><option value="7">F-Instrument (Horn)</option></select></div>
   <div class="strings" id="strings"></div>
