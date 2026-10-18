@@ -79,6 +79,13 @@ function yin(x,sr){
   return sr/(t+(den?0.5*(a-e)/den:0));
 }
 
+// Bildschirm anlassen, solange das Stimmgerät läuft
+let wl=null,running=false;
+async function keepAwake(){
+  try{if('wakeLock' in navigator)wl=await navigator.wakeLock.request('screen')}catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{if(running&&document.visibilityState==='visible')keepAwake()});
+
 let ctx,an,buf,hist=[],last=0,quiet=0;
 async function start(){
   try{
@@ -88,6 +95,7 @@ async function start(){
     an=ctx.createAnalyser();an.fftSize=8192;an.smoothingTimeConstant=0;
     ctx.createMediaStreamSource(st).connect(an);
     buf=new Float32Array(an.fftSize);
+    running=true;keepAwake();
     $('go').hidden=true;$('msg').textContent='Zupfe eine leere Saite und lass sie ausklingen.';
     requestAnimationFrame(tick);
   }catch(e){
