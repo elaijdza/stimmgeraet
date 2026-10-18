@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Kontrabass-Stimmgerät</title>
+<style>
+:root{--bg:#E4EAE6;--ink:#17201C;--mute:#566660;--line:#B3BFB8;--panel:#D5DDD8;--ok:#2C7A57;--off:#B5452E;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101614;--ink:#E3EBE6;--mute:#8A9A92;--line:#2A3631;--panel:#18211D;--ok:#5BC48F;--off:#E2745B;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#101614;--ink:#E3EBE6;--mute:#8A9A92;--line:#2A3631;--panel:#18211D;--ok:#5BC48F;--off:#E2745B;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{background:var(--bg);color:var(--ink);font-family:"Avenir Next","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center}
+main{width:100%;max-width:28rem;padding:1.5rem 1.25rem;display:flex;flex-direction:column;gap:1.5rem;justify-content:center}
+h1{font-size:1rem;font-weight:600;margin:0;color:var(--mute)}
+.note{font-family:"Iowan Old Style",Georgia,serif;font-size:min(34vw,9rem);line-height:1;text-align:center;margin:0;min-height:1em;font-variant-numeric:lining-nums}
+.note small{font-size:.28em;color:var(--mute);margin-left:.08em}
+.read{display:flex;justify-content:space-between;color:var(--mute);font-size:1rem;font-variant-numeric:tabular-nums}
+.read b{color:var(--ink);font-weight:600}
+.gauge{position:relative;height:3.5rem;background:var(--panel);border-radius:.5rem;border:1px solid var(--line);overflow:hidden}
+.zone{position:absolute;left:45%;width:10%;top:0;bottom:0;background:color-mix(in srgb,var(--ok) 28%,transparent)}
+.mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line)}
+.needle{position:absolute;left:50%;top:.5rem;bottom:.5rem;width:.3rem;margin-left:-.15rem;border-radius:.15rem;background:var(--mute);opacity:.35;transition:left .12s linear,background .15s,opacity .15s}
+.needle.live{opacity:1;background:var(--off)}
+.needle.ok{opacity:1;background:var(--ok)}
+.ends{display:flex;justify-content:space-between;font-size:.85rem;color:var(--mute);margin-top:-1rem}
+.strings{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem}
+.strings span{text-align:center;padding:.7rem 0;border-radius:.5rem;border:1px solid var(--line);color:var(--mute);font-weight:600}
+.strings span.on{background:var(--ok);border-color:var(--ok);color:var(--bg)}
+.ref{display:flex;align-items:center;justify-content:space-between;color:var(--mute)}
+.ref div{display:flex;align-items:center;gap:.75rem;color:var(--ink);font-variant-numeric:tabular-nums}
+button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:.5rem;min-width:2.75rem;height:2.75rem;cursor:pointer}
+button:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
+#go{width:100%;background:var(--ok);border-color:var(--ok);color:var(--bg);font-weight:600;font-size:1.1rem;height:3.25rem}
+#msg{margin:0;text-align:center;color:var(--mute);min-height:2.6em;font-size:.95rem}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <h1>Kontrabass-Stimmgerät</h1>
+  <p class="note" id="note" aria-live="polite">–</p>
+  <div class="read"><span><b id="cents">–</b> Cent</span><span><b id="hz">–</b> Hz</span></div>
+  <div>
+    <div class="gauge"><div class="zone"></div><div class="mid"></div><div class="needle" id="needle"></div></div>
+    <div class="ends" style="margin-top:.4rem"><span>tiefer</span><span>höher</span></div>
+  </div>
+  <div class="strings" id="strings"><span data-m="28">E1</span><span data-m="33">A1</span><span data-m="38">D2</span><span data-m="43">G2</span></div>
+  <div class="ref"><span>Kammerton a</span><div><button id="dn" aria-label="Kammerton tiefer">−</button><span id="refv">440 Hz</span><button id="up" aria-label="Kammerton höher">+</button></div></div>
+  <button id="go">Mikrofon starten</button>
+  <p id="msg"></p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const NAMES=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','B♭','B'];
+let ref=440;
+try{const s=parseInt(localStorage.getItem('ref'),10);if(s>=430&&s<=450)ref=s}catch(e){}
+function setRef(v){ref=Math.max(430,Math.min(450,v));$('refv').textContent=ref+' Hz';try{localStorage.setItem('ref',ref)}catch(e){}}
+setRef(ref);
+$('dn').onclick=()=>setRef(ref-1);
+$('up').onclick=()=>setRef(ref+1);
+
+// Grundtonerkennung nach dem YIN-Verfahren, ausgelegt auf 30–140 Hz
+function yin(x,sr){
+  const W=4096,tmax=Math.floor(sr/30),tmin=Math.floor(sr/140);
+  if(x.length<W+tmax)return -1;
+  const c=new Float32Array(tmax+1);let run=0;c[0]=1;
+  for(let t=1;t<=tmax;t++){
+    let s=0;for(let j=0;j<W;j++){const v=x[j]-x[j+t];s+=v*v}
+    run+=s;c[t]=s*t/run;
+  }
+  let t=tmin,found=false;
+  for(;t<tmax;t++){if(c[t]<0.12){while(t+1<tmax&&c[t+1]<c[t])t++;found=true;break}}
+  if(!found||t>=tmax-1)return -1;
+  const a=c[t-1],b=c[t],e=c[t+1],den=a-2*b+e;
+  return sr/(t+(den?0.5*(a-e)/den:0));
+}
+
+let ctx,an,buf,hist=[],last=0,quiet=0;
+async function start(){
+  try{
+    const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    ctx=new (window.AudioContext||window.webkitAudioContext)();
+    await ctx.resume();
+    an=ctx.createAnalyser();an.fftSize=8192;an.smoothingTimeConstant=0;
+    ctx.createMediaStreamSource(st).connect(an);
+    buf=new Float32Array(an.fftSize);
+    $('go').hidden=true;$('msg').textContent='Zupfe eine leere Saite und lass sie ausklingen.';
+    requestAnimationFrame(tick);
+  }catch(e){
+    $('msg').textContent='Kein Mikrofonzugriff. Erlaube das Mikrofon für diese Seite in den Safari-Einstellungen und lade sie neu.';
+  }
+}
+$('go').onclick=start;
+
+function tick(t){
+  requestAnimationFrame(tick);
+  if(t-last<70)return;last=t;
+  an.getFloatTimeDomainData(buf);
+  let r=0;for(let i=0;i<buf.length;i++)r+=buf[i]*buf[i];
+  if(Math.sqrt(r/buf.length)<0.008){if(++quiet>10)idle();return}
+  quiet=0;
+  const f=yin(buf,ctx.sampleRate);
+  if(f<0)return;
+  hist.push(f);if(hist.length>5)hist.shift();
+  show([...hist].sort((a,b)=>a-b)[hist.length>>1]);
+}
+
+function show(f){
+  const midi=12*Math.log2(f/ref)+69,n=Math.round(midi),c=(midi-n)*100;
+  const ok=Math.abs(c)<=5;
+  $('note').innerHTML=NAMES[((n%12)+12)%12]+'<small>'+(Math.floor(n/12)-1)+'</small>';
+  $('cents').textContent=(c>0?'+':c<0?'−':'')+Math.abs(c).toFixed(0);
+  $('hz').textContent=f.toFixed(1);
+  const nd=$('needle');
+  nd.style.left=(50+Math.max(-50,Math.min(50,c)))+'%';
+  nd.className='needle '+(ok?'ok':'live');
+  document.querySelectorAll('#strings span').forEach(s=>s.classList.toggle('on',+s.dataset.m===n));
+}
+function idle(){
+  hist=[];
+  $('note').textContent='–';$('cents').textContent='–';$('hz').textContent='–';
+  const nd=$('needle');nd.style.left='50%';nd.className='needle';
+  document.querySelectorAll('#strings span').forEach(s=>s.classList.remove('on'));
+}
+</script>
+</body>
+</html>
