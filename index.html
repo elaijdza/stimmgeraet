@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Kontrabass-Stimmgerät</title>
+<title>Stimmgerät</title>
 <style>
 :root{--bg:#E4EAE6;--ink:#17201C;--mute:#566660;--line:#B3BFB8;--panel:#D5DDD8;--ok:#2C7A57;--off:#B5452E;color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101614;--ink:#E3EBE6;--mute:#8A9A92;--line:#2A3631;--panel:#18211D;--ok:#5BC48F;--off:#E2745B;color-scheme:dark}}
@@ -20,18 +20,24 @@ h1{font-size:1rem;font-weight:600;margin:0;color:var(--mute)}
 .note small{font-size:.28em;color:var(--mute);margin-left:.08em}
 .read{display:flex;justify-content:space-between;color:var(--mute);font-size:1rem;font-variant-numeric:tabular-nums}
 .read b{color:var(--ink);font-weight:600}
-.gauge{position:relative;height:3.5rem;background:var(--panel);border-radius:.5rem;border:1px solid var(--line);overflow:hidden}
-.zone{position:absolute;left:45%;width:10%;top:0;bottom:0;background:color-mix(in srgb,var(--ok) 28%,transparent)}
-.mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line)}
-.needle{position:absolute;left:50%;top:.5rem;bottom:.5rem;width:.3rem;margin-left:-.15rem;border-radius:.15rem;background:var(--mute);opacity:.35;transition:left .12s linear,background .15s,opacity .15s}
-.needle.live{opacity:1;background:var(--off)}
-.needle.ok{opacity:1;background:var(--ok)}
-.ends{display:flex;justify-content:space-between;font-size:.85rem;color:var(--mute);margin-top:-1rem}
-.strings{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem}
-.strings span{text-align:center;padding:.7rem 0;border-radius:.5rem;border:1px solid var(--line);color:var(--mute);font-weight:600}
+.gauge{width:100%;height:auto;display:block}
+.arc{fill:none;stroke:var(--line);stroke-width:2}
+.zone{fill:none;stroke:color-mix(in srgb,var(--ok) 45%,transparent);stroke-width:14}
+.tick{stroke:var(--mute);stroke-width:2}
+.lab{fill:var(--mute);font-size:12px;text-anchor:middle}
+.needle{transform-origin:150px 160px;transition:transform .12s linear;opacity:.35}
+.needle line{stroke:var(--mute);stroke-width:3;stroke-linecap:round}
+.needle circle{fill:var(--mute)}
+.needle.live{opacity:1}.needle.live line{stroke:var(--off)}.needle.live circle{fill:var(--off)}
+.needle.ok{opacity:1}.needle.ok line{stroke:var(--ok)}.needle.ok circle{fill:var(--ok)}
+.strings{display:flex;gap:.5rem}
+.strings span{flex:1;text-align:center;padding:.7rem 0;border-radius:.5rem;border:1px solid var(--line);color:var(--mute);font-weight:600}
 .strings span.on{background:var(--ok);border-color:var(--ok);color:var(--bg)}
 .ref{display:flex;align-items:center;justify-content:space-between;color:var(--mute)}
 .ref div{display:flex;align-items:center;gap:.75rem;color:var(--ink);font-variant-numeric:tabular-nums}
+select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:.5rem;height:2.75rem;padding:0 .75rem}
+.ref select{max-width:65%}
+select:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
 button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:.5rem;min-width:2.75rem;height:2.75rem;cursor:pointer}
 button:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
 #go{width:100%;background:var(--ok);border-color:var(--ok);color:var(--bg);font-weight:600;font-size:1.1rem;height:3.25rem}
@@ -41,14 +47,25 @@ button:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
 </head>
 <body>
 <main>
-  <h1>Kontrabass-Stimmgerät</h1>
+  <h1>Stimmgerät</h1>
   <p class="note" id="note" aria-live="polite">–</p>
   <div class="read"><span><b id="cents">–</b> Cent</span><span><b id="hz">–</b> Hz</span></div>
-  <div>
-    <div class="gauge"><div class="zone"></div><div class="mid"></div><div class="needle" id="needle"></div></div>
-    <div class="ends" style="margin-top:.4rem"><span>tiefer</span><span>höher</span></div>
-  </div>
-  <div class="strings" id="strings"><span data-m="28">E1</span><span data-m="33">A1</span><span data-m="38">D2</span><span data-m="43">G2</span></div>
+  <svg class="gauge" viewBox="0 0 300 175" role="img" aria-label="Zeigerinstrument für die Abweichung in Cent">
+    <path class="arc" d="M 46.08 100 A 120 120 0 0 1 253.92 100"/>
+    <path class="zone" d="M 137.46 40.66 A 120 120 0 0 1 162.54 40.66"/>
+    <line class="tick" x1="150" y1="52" x2="150" y2="36"/>
+    <line class="tick" x1="204" y1="66.47" x2="212" y2="52.61"/>
+    <line class="tick" x1="96" y1="66.47" x2="88" y2="52.61"/>
+    <line class="tick" x1="243.53" y1="106" x2="257.38" y2="98"/>
+    <line class="tick" x1="56.47" y1="106" x2="42.62" y2="98"/>
+    <text class="lab" x="150" y="22">0</text>
+    <text class="lab" x="273" y="92">+50</text>
+    <text class="lab" x="27" y="92">−50</text>
+    <g class="needle" id="needle"><line x1="150" y1="160" x2="150" y2="48"/><circle cx="150" cy="160" r="8"/></g>
+  </svg>
+  <div class="ref"><label for="inst">Instrument</label><select id="inst"></select></div>
+  <div class="ref"><label for="tr">Anzeige</label><select id="tr"><option value="0">Klingend (Konzertton)</option><option value="2">B-Instrument (Trompete, Klarinette)</option><option value="9">Es-Instrument (Altsaxophon)</option><option value="7">F-Instrument (Horn)</option></select></div>
+  <div class="strings" id="strings"></div>
   <div class="ref"><span>Kammerton a</span><div><button id="dn" aria-label="Kammerton tiefer">−</button><span id="refv">440 Hz</span><button id="up" aria-label="Kammerton höher">+</button></div></div>
   <button id="go">Mikrofon starten</button>
   <p id="msg"></p>
@@ -63,9 +80,30 @@ setRef(ref);
 $('dn').onclick=()=>setRef(ref-1);
 $('up').onclick=()=>setRef(ref+1);
 
-// Grundtonerkennung nach dem YIN-Verfahren, ausgelegt auf 30–140 Hz
+// Instrumente: leere Saiten als MIDI-Noten, in Stimmreihenfolge
+let tr=0;
+try{const v=parseInt(localStorage.getItem('tr'),10);if([0,2,7,9].includes(v))tr=v}catch(e){}
+$('tr').value=tr;
+function label(m){const d=m+tr;return NAMES[((d%12)+12)%12]+(Math.floor(d/12)-1)}
+const INST={'Chromatisch (alle Töne)':[],'Kontrabass':[28,33,38,43],'Gitarre':[40,45,50,55,59,64],'Violine':[55,62,69,76],'Bratsche':[48,55,62,69],'Cello':[36,43,50,57],'Ukulele':[67,60,64,69],'Trompete':[58,65,70,74,77]};
+const sel=$('inst');
+Object.keys(INST).forEach(k=>{const o=document.createElement('option');o.textContent=k;sel.appendChild(o)});
+function setInst(k){
+  if(!INST[k])k='Chromatisch (alle Töne)';
+  sel.value=k;
+  const box=$('strings');box.innerHTML='';box.hidden=!INST[k].length;
+  INST[k].forEach(m=>{const e=document.createElement('span');e.dataset.m=m;e.textContent=label(m);box.appendChild(e)});
+  try{localStorage.setItem('inst',k)}catch(e){}
+}
+sel.onchange=()=>setInst(sel.value);
+$('tr').onchange=()=>{tr=+$('tr').value;try{localStorage.setItem('tr',tr)}catch(e){}setInst(sel.value);hist=[];idle()};
+let savedInst='';try{savedInst=localStorage.getItem('inst')||''}catch(e){}
+setInst(savedInst);
+
+
+// Grundtonerkennung nach dem YIN-Verfahren, ausgelegt auf 30–1400 Hz
 function yin(x,sr){
-  const W=4096,tmax=Math.floor(sr/30),tmin=Math.floor(sr/140);
+  const W=4096,tmax=Math.floor(sr/30),tmin=Math.floor(sr/1400);
   if(x.length<W+tmax)return -1;
   const c=new Float32Array(tmax+1);let run=0;c[0]=1;
   for(let t=1;t<=tmax;t++){
@@ -96,7 +134,7 @@ async function start(){
     ctx.createMediaStreamSource(st).connect(an);
     buf=new Float32Array(an.fftSize);
     running=true;keepAwake();
-    $('go').hidden=true;$('msg').textContent='Zupfe eine leere Saite und lass sie ausklingen.';
+    $('go').hidden=true;$('msg').textContent='Spiele einen Ton und lass ihn ausklingen.';
     requestAnimationFrame(tick);
   }catch(e){
     $('msg').textContent='Kein Mikrofonzugriff. Erlaube das Mikrofon für diese Seite in den Safari-Einstellungen und lade sie neu.';
@@ -120,18 +158,19 @@ function tick(t){
 function show(f){
   const midi=12*Math.log2(f/ref)+69,n=Math.round(midi),c=(midi-n)*100;
   const ok=Math.abs(c)<=5;
-  $('note').innerHTML=NAMES[((n%12)+12)%12]+'<small>'+(Math.floor(n/12)-1)+'</small>';
+  const d=n+tr;
+  $('note').innerHTML=NAMES[((d%12)+12)%12]+'<small>'+(Math.floor(d/12)-1)+'</small>';
   $('cents').textContent=(c>0?'+':c<0?'−':'')+Math.abs(c).toFixed(0);
   $('hz').textContent=f.toFixed(1);
   const nd=$('needle');
-  nd.style.left=(50+Math.max(-50,Math.min(50,c)))+'%';
-  nd.className='needle '+(ok?'ok':'live');
+  nd.style.transform='rotate('+(Math.max(-50,Math.min(50,c))*1.2)+'deg)';
+  nd.setAttribute('class','needle '+(ok?'ok':'live'));
   document.querySelectorAll('#strings span').forEach(s=>s.classList.toggle('on',+s.dataset.m===n));
 }
 function idle(){
   hist=[];
   $('note').textContent='–';$('cents').textContent='–';$('hz').textContent='–';
-  const nd=$('needle');nd.style.left='50%';nd.className='needle';
+  const nd=$('needle');nd.style.transform='rotate(0deg)';nd.setAttribute('class','needle');
   document.querySelectorAll('#strings span').forEach(s=>s.classList.remove('on'));
 }
 </script>
